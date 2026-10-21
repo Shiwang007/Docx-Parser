@@ -1,10 +1,31 @@
 import docx
 import re
 
+
 class AnswerKeyParser:
     def __init__(self, docx_path):
         self.doc = docx.Document(docx_path)
         self.answers = {}
+
+    def _store_answer(self, question_number, answer_text):
+        """Normalize and store one answer key entry."""
+        clean_num = re.sub(r'[^\d]', '', question_number)
+        answer_text = answer_text.strip().upper()
+        if not clean_num or not answer_text:
+            return
+
+        # Split only letter-option answers such as A,C or A/C.
+        # Numeric answers such as 42 or 6 must remain a single value.
+        if re.fullmatch(r'[A-D](?:\s*[,/]\s*[A-D])*', answer_text):
+            correct_options = [
+                option.strip().upper()
+                for option in re.split(r'[,/]', answer_text)
+                if option.strip()
+            ]
+        else:
+            correct_options = [answer_text]
+
+        self.answers[clean_num] = correct_options
 
     def parse(self):
         """
@@ -55,9 +76,11 @@ class AnswerKeyParser:
 
         return self.answers
 
+
 if __name__ == "__main__":
     import sys
     import json
+
     if len(sys.argv) > 1:
         parser = AnswerKeyParser(sys.argv[1])
         results = parser.parse()
