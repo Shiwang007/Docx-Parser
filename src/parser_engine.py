@@ -1,4 +1,5 @@
 import re
+import os
 from typing import List, Dict, Any, Optional
 from docx import Document
 from docx.table import Table
@@ -9,20 +10,38 @@ from lxml import etree
 from src.processor import ContentProcessor
 from src.models import ParsedDocument, Section, Question, Option, PlaceholderData
 
-# Common mappings for the 'Symbol' font used in Word
+# Common and standard mappings for the 'Symbol' font used in Word
 SYMBOL_MAP = {
-    '61': 'α', '62': 'β', '67': 'γ', '64': 'δ', '65': 'ε', '66': 'φ', '68': 'η', 
-    '69': 'ι', '6B': 'κ', '6C': 'λ', '6D': 'μ', '6E': 'ν', '6F': 'ο', '70': 'π', 
-    '71': 'θ', '72': 'ρ', '73': 'σ', '74': 'τ', '75': 'υ', '77': 'ω', '78': 'ξ', 
-    '79': 'ψ', '7A': 'ζ',
-    '41': 'Α', '42': 'Β', '47': 'Γ', '44': 'Δ', '45': 'Ε', '5A': 'Ζ', '48': 'Η', '51': 'Θ', 
-    '4C': 'Λ', '4D': 'Μ', '4E': 'Ν', '58': 'Ξ', '4F': 'Ο', '50': 'Π', 
-    '52': 'Ρ', '53': 'Σ', '54': 'Τ', '55': 'Υ', '46': 'Φ', '59': 'Ψ', '57': 'Ω',
-    'B1': '±', 'D7': '×', 'B8': '÷', 'BE': '∞', 'D6': '√', 'B6': '∂', 'B4': '×',
-    'B9': '≠', 'A3': '≤', 'B3': '≥', 'AA': '×',
-    'AB': '⇌', 'D4': '→', 'C4': '→', 'E0': '→', 'F0': '→', 'AE': '→',
-    '3D': '=', '2B': '+', '44': 'Δ', 'B0': '°', '21': '!', 'A2': '·',
-    'BA': '≡', '2D': '−', 'AD': '−'
+    # Lowercase Greek letters
+    '61': 'α', '62': 'β', '63': 'χ', '64': 'δ', '65': 'ε', '66': 'φ', '67': 'γ', 
+    '68': 'η', '69': 'ι', '6A': 'ϕ', '6B': 'κ', '6C': 'λ', '6D': 'μ', '6E': 'ν', 
+    '6F': 'ο', '70': 'π', '71': 'θ', '72': 'ρ', '73': 'σ', '74': 'τ', '75': 'υ', 
+    '76': 'ϖ', '77': 'omega', '78': 'ξ', '79': 'ψ', '7A': 'ζ',
+    
+    # Uppercase Greek letters
+    '41': 'Α', '42': 'Β', '43': 'Χ', '44': 'Δ', '45': 'Ε', '46': 'Φ', '47': 'Γ', 
+    '48': 'Η', '49': 'Ι', '4A': 'ϑ', '4B': 'Κ', '4C': 'Λ', '4D': 'Μ', '4E': 'Ν', 
+    '4F': 'Ο', '50': 'Π', '51': 'Θ', '52': 'Ρ', '53': 'Σ', '54': 'Τ', '55': 'Υ', 
+    '56': 'ς', '57': 'Ω', '58': 'Ξ', '59': 'Ψ', '5A': 'Ζ',
+    
+    # Standard Operators, relations and punctuation
+    '21': '!', '22': '∀', '23': '#', '24': '∃', '25': '%', '26': '&', '27': '∋',
+    '28': '(', '29': ')', '2A': '∗', '2B': '+', '2C': ',', '2D': '−', '2E': '.', '2F': '/',
+    '3A': ':', '3B': ';', '3C': '<', '3D': '=', '3E': '>', '3F': '?',
+    
+    # High-bit / Special Math Symbols
+    'A1': 'ϒ', 'A2': '·', 'A3': '≤', 'A4': '⁄', 'A5': '∞', 'A6': 'ƒ', 'A7': '♣', 
+    'A8': '♦', 'A9': '♥', 'AA': '×', 'AB': '⇌', 'AC': '←', 'AD': '−', 'AE': '→', 'AF': '↓',
+    'B0': '°', 'B1': '±', 'B2': '″', 'B3': '≥', 'B4': '×', 'B5': '∝', 'B6': '∂', 
+    'B7': '•', 'B8': '÷', 'B9': '≠', 'BA': '≡', 'BB': '≈', 'BC': '…', 'BD': '⏐', 
+    'BE': '∞', 'BF': '↵',
+    'C0': 'ℵ', 'C1': 'ℑ', 'C2': 'ℜ', 'C3': '℘', 'C4': '→', 'C5': '⊕', 'C6': '∅', 
+    'C7': '∩', 'C8': '∪', 'C9': '⊃', 'CA': '⊇', 'CB': '⊄', 'CC': '⊆', 'CD': '⊆', 
+    'CE': '∈', 'CF': '∉',
+    'D0': '∠', 'D1': '∇', 'D2': '®', 'D3': '©', 'D4': '→', 'D5': '∏', 'D6': '√', 
+    'D7': '×', 'D8': '¬', 'D9': '∧', 'DA': '∨', 'DB': '⇔', 'DC': '⇐', 'DD': '⇑', 
+    'DE': '⇒', 'DF': '⇓',
+    'E0': '→', 'E1': '⟨', 'E5': '∑', 'F0': '→', 'F1': '⟩', 'F2': '∫'
 }
 
 class DocxParser:
@@ -83,7 +102,8 @@ class DocxParser:
             # 1. Check for Section Headers
             if is_text:
                 clean_text = self._get_text_recursive(element).strip()
-                s_match = re_section.search(clean_text)
+                is_question_start = self.re_question_marker.match(content) if content else False
+                s_match = re_section.search(clean_text) if not is_question_start else None
                 if s_match:
                     section_name = s_match.group(1).upper()
                     if section_name == "BIO": section_name = "Biology"
@@ -169,6 +189,10 @@ class DocxParser:
 
         # Final placeholders are already in self.processor.placeholders
         doc_data.placeholders = self.processor.placeholders
+        
+        # Run duplicate questions and options checks
+        self._validate_document(doc_data)
+        
         return doc_data
 
     def _parse_options_into_question(self, text: str, question: Question):
@@ -440,3 +464,64 @@ class DocxParser:
         except:
             pass
         return None
+
+    def _validate_document(self, doc_data: ParsedDocument):
+        """Checks for duplicate questions globally and duplicate options in each question."""
+        warnings = []
+        
+        # Helper for content normalization
+        def normalize_text(text: str) -> str:
+            # Replace formula/image placeholders with LaTeX or identifier to avoid false duplicates
+            def repl(match):
+                key = match.group(1)
+                if key in doc_data.placeholders:
+                    ph = doc_data.placeholders[key]
+                    if ph.category == "formula" and ph.latex:
+                        return ph.latex
+                    elif ph.category == "image":
+                        return key
+                return ""
+            
+            cleaned = re.sub(r'\{\{(.*?)\}\}', repl, text)
+            cleaned = cleaned.lower()
+            # Remove whitespace
+            cleaned = re.sub(r'\s+', '', cleaned)
+            # Remove sentence punctuation but keep math operators, brackets, parentheses
+            cleaned = re.sub(r'[\.,:;\"\'\?\!\#\@\&\`\~\|\\]', '', cleaned)
+            return cleaned
+
+        # 1. Check for duplicate questions
+        seen_questions = {}  # normalized_text -> list of (q_number, section_name)
+        for section in doc_data.sections:
+            for q in section.questions:
+                norm_text = normalize_text(q.text)
+                if norm_text:
+                    seen_questions.setdefault(norm_text, []).append((q.number, section.name))
+
+        for norm_text, occurrences in seen_questions.items():
+            if len(occurrences) > 1:
+                q_info = ", ".join([f"Q{num} in {sec}" for num, sec in occurrences])
+                warning_msg = f"Duplicate question text found across: {q_info}"
+                warnings.append(warning_msg)
+                print(f"[WARNING] {warning_msg}")
+
+        # 2. Check for duplicate options in each question
+        for section in doc_data.sections:
+            for q in section.questions:
+                seen_options = {}  # normalized_option_text -> list of labels
+                for opt in q.options:
+                    norm_opt = normalize_text(opt.text)
+                    if norm_opt:
+                        seen_options.setdefault(norm_opt, []).append(opt.label)
+                
+                for norm_opt, labels in seen_options.items():
+                    if len(labels) > 1:
+                        labels_str = ", ".join(labels)
+                        warning_msg = f"Question Q{q.number} in {section.name} has duplicate options: {labels_str}"
+                        warnings.append(warning_msg)
+                        print(f"[WARNING] {warning_msg}")
+
+        # Store warnings in metadata if any are found
+        if warnings:
+            doc_data.metadata["warnings"] = warnings
+

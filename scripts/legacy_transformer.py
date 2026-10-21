@@ -62,6 +62,31 @@ def resolve_placeholders(text, placeholders):
 
     return result
 
+def extract_answer_labels(raw_answers):
+    """Normalize and split correct answers into clean individual labels."""
+    if not raw_answers:
+        return []
+    if isinstance(raw_answers, (str, int, float)):
+        items = [str(raw_answers)]
+    elif isinstance(raw_answers, list):
+        items = [str(x) for x in raw_answers]
+    else:
+        items = [str(raw_answers)]
+
+    labels = []
+    for item in items:
+        parts = re.split(r'[,;/|]|\band\b|\bor\b|&', item, flags=re.IGNORECASE)
+        for part in parts:
+            cleaned = part.strip()
+            cleaned = re.sub(r'^[(\[\{]+|[)\]\}]+$', '', cleaned).strip().rstrip('.').strip()
+            if not cleaned:
+                continue
+            if len(cleaned) > 1 and cleaned.isalpha() and all(c.upper() in 'ABCD' for c in cleaned):
+                labels.extend([c.upper() for c in cleaned])
+            else:
+                labels.append(cleaned)
+    return labels
+
 def transform_to_legacy(input_json_path):
     """Main transformer to bridge Studio JSON to Legacy DPP JSON."""
     with open(input_json_path, 'r', encoding='utf-8') as f:
@@ -90,19 +115,46 @@ def transform_to_legacy(input_json_path):
                 })
             
             # Resolve Correct Answers
-            # Map labels (A, B, C) back to option values as required by legacy schema
-            correct_labels = q.get("correctAnswer", [])
+            raw_correct = q.get("correctAnswer", [])
+            correct_labels = extract_answer_labels(raw_correct)
             legacy_answers = []
+            
+            # Check if this is an MCQ (has options) or integer type
+            options = q.get("options", [])
+            has_options = len(options) > 0
+            
             for label in correct_labels:
-                # Find the option with this label
-                found_opt = next((o for o in q.get("options", []) if o["label"] == label), None)
-                if found_opt:
-                    legacy_answers.append(resolve_placeholders(found_opt["text"], placeholders))
+                if has_options:
+                    norm_label = re.sub(r'[^a-zA-Z0-9]', '', label).upper()
+                    found_opt = next(
+                        (o for o in options if re.sub(r'[^a-zA-Z0-9]', '', o.get("label", "")).upper() == norm_label),
+                        None
+                    )
+                    # Support 1-based index mapping if numeric (e.g. 1 -> option 0)
+                    if not found_opt and norm_label.isdigit():
+                        idx = int(norm_label) - 1
+                        if 0 <= idx < len(options):
+                            found_opt = options[idx]
 
-            # Final Legacy Object
+                    if found_opt:
+                        legacy_answers.append(resolve_placeholders(found_opt["text"], placeholders))
+                    else:
+                        legacy_answers.append(label)
+                else:
+                    legacy_answers.append(label)
+
+            # Determine Question Type
+            if not has_options:
+                q_type = "integer"
+            elif len(legacy_answers) > 1 or len(correct_labels) > 1 or q.get("type") == "multi-correct" or q.get("questionType") == "multi-correct":
+                q_type = "multi-correct"
+            else:
+                q_type = "single-correct"
+
+            
             legacy_questions.append({
                 "questionId": "",
-                "questionType": q.get("type", "single-correct"),
+                "questionType": q_type,
                 "testPaperId": "",
                 "questionFormat": "text",
                 "question": q_text,

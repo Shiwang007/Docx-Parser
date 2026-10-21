@@ -4,10 +4,12 @@ import json
 import time
 from typing import List, Dict
 
-# Add src to path to import local modules
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+# Add project root to path to import src modules
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
-from parser_engine import DocxParser
+from src.parser_engine import DocxParser
 
 def batch_process():
     input_dir = "data"

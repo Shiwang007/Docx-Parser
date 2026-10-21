@@ -107,7 +107,7 @@ class ContentProcessor:
             
         # 2. Text elements
         elif tag == "t":
-            return node.text if node.text else ""
+            return self._map_symbols(node.text) if node.text else ""
             
         # 3. Fractions (m:f)
         elif tag == "f":
@@ -227,11 +227,11 @@ class ContentProcessor:
         # 10. n-Ary Operators (m:nary - Summations, Integrals)
         elif tag == "nary":
             naryPr = self._find_math_child(node, "naryPr")
-            chr_val = "∑"
+            chr_val = "∫"  # Default in OMML if chr is omitted is U+222B (integral)
             if naryPr is not None:
                 chr_node = self._find_math_child(naryPr, "chr")
                 if chr_node is not None:
-                    chr_val = chr_node.get("{http://schemas.openxmlformats.org/officeDocument/2006/math}val", "∑")
+                    chr_val = chr_node.get("{http://schemas.openxmlformats.org/officeDocument/2006/math}val", "∫")
             
             nary_map = {
                 "∑": "\\sum", "∫": "\\int", "∬": "\\iint", "∭": "\\iiint",
@@ -306,3 +306,97 @@ class ContentProcessor:
             if child.tag.endswith(tag_name):
                 return child
         return None
+
+    def _map_symbols(self, text: str) -> str:
+        """Translates Unicode math symbols and Greek letters to LaTeX commands."""
+        if not text:
+            return ""
+        
+        symbol_map = {
+            # Set theory and logic
+            "∈": "\\in ",
+            "∉": "\\notin ",
+            "∩": "\\cap ",
+            "∪": "\\cup ",
+            "⊆": "\\subseteq ",
+            "⊇": "\\supseteq ",
+            "⊂": "\\subset ",
+            "⊃": "\\supset ",
+            "⊄": "\\nsubset ",
+            "⊈": "\\nsubseteq ",
+            "⊊": "\\subsetneq ",
+            "∀": "\\forall ",
+            "∃": "\\exists ",
+            "∴": "\\therefore ",
+            "∵": "\\because ",
+            
+            # Greek letters (lowercase)
+            "α": "\\alpha ",
+            "β": "\\beta ",
+            "γ": "\\gamma ",
+            "δ": "\\delta ",
+            "ε": "\\epsilon ",
+            "ζ": "\\zeta ",
+            "η": "\\eta ",
+            "θ": "\\theta ",
+            "ι": "\\iota ",
+            "κ": "\\kappa ",
+            "λ": "\\lambda ",
+            "μ": "\\mu ",
+            "ν": "\\nu ",
+            "ξ": "\\xi ",
+            "π": "\\pi ",
+            "ρ": "\\rho ",
+            "σ": "\\sigma ",
+            "τ": "\\tau ",
+            "υ": "\\upsilon ",
+            "φ": "\\phi ",
+            "χ": "\\chi ",
+            "ψ": "\\psi ",
+            "ω": "\\omega ",
+            
+            # Greek letters (uppercase)
+            "Δ": "\\Delta ",
+            "Γ": "\\Gamma ",
+            "Θ": "\\Theta ",
+            "Λ": "\\Lambda ",
+            "Ξ": "\\Xi ",
+            "Π": "\\Pi ",
+            "Σ": "\\Sigma ",
+            "Φ": "\\Phi ",
+            "Ψ": "\\Psi ",
+            "Ω": "\\Omega ",
+            
+            # Operators and relations
+            "×": "\\times ",
+            "÷": "\\div ",
+            "±": "\\pm ",
+            "∓": "\\mp ",
+            "≤": "\\le ",
+            "≥": "\\ge ",
+            "≠": "\\ne ",
+            "≈": "\\approx ",
+            "∝": "\\propto ",
+            "∞": "\\infty ",
+            "≅": "\\cong ",
+            "≡": "\\equiv ",
+            "∼": "\\sim ",
+            "ℏ": "\\hbar ",
+            
+            # Arrows
+            "→": "\\rightarrow ",
+            "←": "\\leftarrow ",
+            "↔": "\\leftrightarrow ",
+            "⇒": "\\Rightarrow ",
+            "⇔": "\\Leftrightarrow ",
+            
+            # Common units / symbols
+            "°": "^\\circ ",
+            "Å": "\\text{Å}",
+            "…": "\\dots ",
+        }
+        
+        result = []
+        for char in text:
+            result.append(symbol_map.get(char, char))
+        return "".join(result)

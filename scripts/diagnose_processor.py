@@ -1,8 +1,8 @@
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from processor import ContentProcessor
+from src.processor import ContentProcessor
 from lxml import etree
 
 def test():

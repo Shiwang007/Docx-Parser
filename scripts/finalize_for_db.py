@@ -111,7 +111,10 @@ def finalize_for_db(json_path, output_path):
                     # Fallback if label is missing or doesn't match (keep label as backup)
                     correct_values.append(label)
 
-            q_type = "multi-correct" if len(correct_values) > 1 else "single-correct"
+            if not q.get('options', []):
+                q_type = "integer"
+            else:
+                q_type = "multi-correct" if len(correct_values) > 1 else "single-correct"
             
             # 3. Build Mongoose-Ready Object
             db_q = {
