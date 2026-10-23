@@ -111,14 +111,17 @@ async def finalize_exam(filename: str = Form(...)):
         )
 
 @app.post("/api/finalize/legacy")
-async def finalize_legacy_exam(filename: str = Form(...)):
+async def finalize_legacy_exam(
+    filename: str = Form(...),
+    paper_type: Optional[str] = Form("normal")
+):
     try:
         # Resolve path
         intermediate_path = os.path.join(OUTPUT_DIR, filename)
         if not os.path.exists(intermediate_path):
             raise Exception("Preview file not found")
             
-        legacy_questions = transform_to_legacy(intermediate_path)
+        legacy_questions = transform_to_legacy(intermediate_path, paper_type=paper_type)
         
         # Save legacy file for posterity/download
         legacy_filename = f"legacy_{filename}"

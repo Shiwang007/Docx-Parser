@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const aInput = document.getElementById('a-input');
     const aStatus = document.getElementById('a-status');
     const examTitleInput = document.getElementById('exam-title');
+    const paperFormatSelect = document.getElementById('paper-format');
     const execDocxBtn = document.getElementById('exec-docx');
 
     // --- Elements: PDF Toolbox ---
@@ -223,11 +224,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {}
     }
 
-    window.finalizeLegacy = async (filename) => {
+    window.finalizeLegacy = async (filename, forcedPaperType) => {
         updateToast("Generating Legacy Export (Math Rendering)...", true);
         try {
             const formData = new FormData();
             formData.append('filename', filename);
+            const paperType = forcedPaperType || (paperFormatSelect ? paperFormatSelect.value : 'normal');
+            formData.append('paper_type', paperType);
             const resp = await fetch('/api/finalize/legacy', { method: 'POST', body: formData });
             const data = await resp.json();
             if (data.success) {

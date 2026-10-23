@@ -87,21 +87,91 @@ def extract_answer_labels(raw_answers):
                 labels.append(cleaned)
     return labels
 
-def transform_to_legacy(input_json_path):
+def calculate_marks(paper_type: str, q_index: int):
+    """
+    Calculates marks and negativeMarks based on paper type and question index (1-based) within each subject.
+    """
+    p_type = (paper_type or "").lower().strip().replace(" ", "_").replace("-", "_")
+    
+    if p_type in ("advance_1", "advance1"):
+        pos = ((q_index - 1) % 16) + 1
+        if 1 <= pos <= 4:
+            return "3", "1"
+        elif 5 <= pos <= 8:
+            return "4", "1"
+        elif 9 <= pos <= 12:
+            return "4", "0"
+        else: # 13 <= pos <= 16
+            return "4", "1"
+
+    elif p_type in ("advance_2", "advance2"):
+        pos = ((q_index - 1) % 16) + 1
+        if 1 <= pos <= 4:
+            return "3", "1"
+        elif 5 <= pos <= 9:
+            return "4", "1"
+        elif 10 <= pos <= 14:
+            return "4", "0"
+        else: # 15 <= pos <= 16
+            return "2", "0"
+
+    # Default / Normal
+    return "4", "1"
+
+def normalize_subject_name(name: str) -> str:
+    """Normalize section name to a standard subject matching the backend schema."""
+    if not name:
+        return "Combined"
+    name_clean = re.sub(r'\(.*?\)', '', name).strip()
+    name_upper = name_clean.upper()
+    if "PHYSIC" in name_upper:
+        return "Physics"
+    elif "CHEM" in name_upper:
+        return "Chemistry"
+    elif "MATH" in name_upper:
+        return "Mathematics"
+    elif "BOTAN" in name_upper:
+        return "Botany"
+    elif "ZOOL" in name_upper:
+        return "Zoology"
+    elif "BIO" in name_upper:
+        return "Biology"
+    elif "ENG" in name_upper:
+        return "English"
+    elif "SOCIAL" in name_upper:
+        return "Social Science"
+    elif "MENTAL" in name_upper:
+        return "Mental Ability"
+    elif "COMBINED" in name_upper:
+        return "Combined"
+    return name_clean.capitalize() if name_clean else "Combined"
+
+def transform_to_legacy(input_json_path, paper_type="normal"):
     """Main transformer to bridge Studio JSON to Legacy DPP JSON."""
     with open(input_json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
+
+    # Allow paper_type from document metadata if not explicitly provided
+    if not paper_type or paper_type == "normal":
+        paper_type = data.get("metadata", {}).get("paper_type", paper_type or "normal")
 
     placeholders = data.get("placeholders", {})
     sections = data.get("sections", [])
     
     # Flatten sections into one list of questions
     legacy_questions = []
+    subject_q_counts = {}
     
     for section in sections:
         sec_name = section.get("name", "Unknown")
+        norm_subject = normalize_subject_name(sec_name)
         
         for q in section.get("questions", []):
+            # Track question count per subject to determine marks
+            subject_q_counts[norm_subject] = subject_q_counts.get(norm_subject, 0) + 1
+            q_idx_in_subject = subject_q_counts[norm_subject]
+            marks, negative_marks = calculate_marks(paper_type, q_idx_in_subject)
+
             # Resolve Question Text
             q_text = resolve_placeholders(q["text"], placeholders)
             
@@ -159,9 +229,9 @@ def transform_to_legacy(input_json_path):
                 "questionFormat": "text",
                 "question": q_text,
                 "options": legacy_options,
-                "marks": "4",
-                "negativeMarks": "1",
-                "subject": sec_name, # Use section name as subject fallback
+                "marks": marks,
+                "negativeMarks": negative_marks,
+                "subject": norm_subject,
                 "correctAnswer": legacy_answers
             })
 
@@ -171,8 +241,9 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
         input_path = sys.argv[1]
-        output_data = transform_to_legacy(input_path)
+        paper_type = sys.argv[2] if len(sys.argv) > 2 else "normal"
+        output_data = transform_to_legacy(input_path, paper_type=paper_type)
         output_path = input_path.replace('.json', '_legacy.json')
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, indent=2, ensure_ascii=False)
-        print(f"[*] Transformed to: {output_path}")
+        print(f"[*] Transformed to: {output_path} (Format: {paper_type})")

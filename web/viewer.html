@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Exam Console | Medjeex Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <style>
+        :root {
+            --bg: #09090b;
+            --card-bg: rgba(20, 20, 23, 0.7);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #22d3ee;
+            --primary-glow: rgba(34, 211, 238, 0.2);
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        [data-lite="true"] header { display: none; }
+        [data-lite="true"] body { background: transparent !important; }
+        [data-lite="true"] .container { max-width: 100%; margin: 0; padding: 1.5rem; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        header {
+            padding: 1.5rem 2.5rem;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo { font-family: 'Outfit', sans-serif; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        .logo span { color: var(--primary); }
+
+        .container {
+            max-width: 1100px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Question Console Components */
+        .header-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border-top: 4px solid var(--primary);
+        }
+
+        .section-divider {
+            margin: 4rem 0 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .section-divider h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+
+        .section-divider .line {
+            height: 1px;
+            background: linear-gradient(to right, var(--border), transparent);
+            flex: 1;
+        }
+
+        .question-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 1.25rem;
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeSlideUp 0.6s ease-out backwards;
+            position: relative;
+        }
+
+        .question-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-4px); }
+
+        .question-id {
+            position: absolute;
+            top: 0; left: 2.5rem;
+            transform: translateY(-50%);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 0.35rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: 0.05em;
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            white-space: pre-wrap;
+            color: #fff;
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .option-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            display: flex;
+            gap: 1.25rem;
+            align-items: flex-start;
+            transition: all 0.2s;
+        }
+        
+        .option-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
+
+        .option-label {
+            font-weight: 800;
+            color: var(--primary);
+            background: var(--primary-glow);
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        /* Image & Diagram Framing */
+        .diagram-frame {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .diagram-frame img {
+            border-radius: 0.5rem;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+        }
+
+        /* Math Styling */
+        .katex-display { margin: 1.5rem 0 !important; overflow-x: auto; overflow-y: hidden; }
+        .katex { font-size: 1.05em !important; color: #fff; }
+
+        /* Tables */
+        .nx-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .nx-table th, .nx-table td {
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .nx-table th { background: rgba(255,255,255,0.03); color: var(--primary); font-family: 'Outfit'; }
+
+        /* Match UI */
+        .match-container {
+            display: grid;
+            gap: 1rem;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+        }
+
+        .match-cell { font-weight: 500; font-size: 1rem; }
+
+        /* Verification Elements */
+        .correct-answer {
+            margin-top: 2rem;
+            padding: 1rem 1.5rem;
+            background: rgba(16, 185, 129, 0.05);
+            border-left: 3px solid #10b981;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #10b981;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .container { padding: 0 1rem; }
+        }
+
+        .warnings-box {
+            background: rgba(245, 158, 11, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            border-top: 4px solid #f59e0b;
+            border-radius: 1rem;
+            padding: 1.5rem 2rem;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow);
+            animation: fadeSlideUp 0.6s ease-out backwards;
+        }
+
+        .error-stage {
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body data-lite="false">
+
+    <header id="main-header">
+        <div class="logo">MED<span>JEEX</span> STUDIO CONSOLE</div>
+        <div id="controls"></div>
+    </header>
+
+    <div class="container" id="content">
+        <div style="text-align: center; padding: 10rem 0;">
+            <div style="font-size: 0.8rem; letter-spacing: 0.2em; color: var(--text-muted); text-transform: uppercase;">Initializing Console Environment</div>
+        </div>
+    </div>
+
+    <script>
+        let paperData = null;
+
+        if (new URLSearchParams(window.location.search).get('lite') === 'true') {
+            document.body.setAttribute('data-lite', 'true');
+        }
+
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fileName = urlParams.get('file');
+            
+            if (!fileName) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error-stage">
+                        <h1 style="color: var(--primary); margin-bottom: 1rem;">Console Inactive</h1>
+                        <p style="color: var(--text-muted)">Please stage an exam in the Studio to begin review.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const response = await fetch('../output/' + fileName);
+                if (!response.ok) throw new Error("Target file missing from output archive.");
+                paperData = await response.json();
+                renderPaper();
+            } catch (err) {
+                document.getElementById('content').innerHTML = `<div class="error-stage"><p>${err.message}</p></div>`;
+            }
+        }
+
+        function renderPaper() {
+            const container = document.getElementById('content');
+            container.innerHTML = '';
+
+            // 1. Header Metadata
+            if (paperData.metadata && paperData.metadata.header_info) {
+                const headerBox = document.createElement('div');
+                headerBox.className = 'header-box';
+                headerBox.innerHTML = paperData.metadata.header_info
+                    .map(h => `<div style="margin-bottom: 0.5rem">${processContent(h)}</div>`)
+                    .join('');
+                container.appendChild(headerBox);
+            }
+
+            // 1.5 Warnings Box
+            if (paperData.metadata && paperData.metadata.warnings && paperData.metadata.warnings.length > 0) {
+                const warningsBox = document.createElement('div');
+                warningsBox.className = 'warnings-box';
+                warningsBox.innerHTML = `
+                    <h3 style="color: #f59e0b; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        ⚠️ WARNINGS DETECTED (${paperData.metadata.warnings.length})
+                    </h3>
+                    <ul style="text-align: left; padding-left: 1.25rem; color: #d4d4d8; font-size: 0.9rem;">
+                        ${paperData.metadata.warnings.map(w => `<li style="margin-bottom: 0.5rem">${w}</li>`).join('')}
+                    </ul>
+                `;
+                container.appendChild(warningsBox);
+            }
+
+            // 2. Sections & Questions
+            paperData.sections.forEach((section, sIdx) => {
+                const divider = document.createElement('div');
+                divider.className = 'section-divider';
+                divider.innerHTML = `<div class="line"></div><h2>${section.name}</h2><div class="line"></div>`;
+                container.appendChild(divider);
+
+                section.questions.forEach((q, qIdx) => {
+                    const card = document.createElement('div');
+                    card.className = 'question-card';
+                    card.style.animationDelay = `${qIdx * 0.05}s`;
+                    
+                    card.innerHTML = `
+                        <div class="question-id">Q.${q.number}</div>
+                        <div class="question-text">${processContent(q.text)}</div>
+                        <div class="options-grid">
+                            ${q.options.map(opt => `
+                                <div class="option-item">
+                                    <div class="option-label">${opt.label}</div>
+                                    <div class="option-body">${processContent(opt.text)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${q.correctAnswer && q.correctAnswer.length > 0 ? `
+                            <div class="correct-answer">
+                                <i class="fa-solid fa-circle-check"></i>
+                                KEY: ${q.correctAnswer.join(', ')}
+                            </div>
+                        ` : ''}
+                    `;
+                    container.appendChild(card);
+                });
+            });
+
+            // 3. KaTeX Post-Process
+            if (window.renderMathInElement) {
+                renderMathInElement(container, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+
+        function processContent(text) {
+            if (!text) return "";
+            let placeholders = paperData.placeholders || {};
+            let result = text;
+
+            // Horizontal Grouping for tables
+            result = result.replace(/\{\{table_(\d+)\}\}/g, (match, id) => {
+                const data = placeholders[`table_${id}`];
+                if (!data || !data.data) return match;
+                
+                let html = `<table class="nx-table">`;
+                data.data.rows.forEach(row => {
+                    html += `<tr>${row.cells.map(c => `<td>${processContent(c)}</td>`).join('')}</tr>`;
+                });
+                return html + `</table>`;
+            });
+
+            // Diagram Framing
+            result = result.replace(/\{\{img_(\d+)\}\}/g, (match, id) => {
+                const pData = placeholders[`img_${id}`];
+                if (!pData || !pData.data || !pData.data.base64) return `<span style="color:red">[IMAGE MISSING]</span>`;
+                
+                if (pData.data.is_unsupported) {
+                    return `<div class="error-stage" style="padding: 1rem; font-size: 0.8rem;">⚠️ Unsupported Diagram Format</div>`;
+                }
+
+                let widthStyle = "";
+                if (pData.data.width) {
+                    const rawWidth = Math.round(pData.data.width / 9525);
+                    const scale = pData.placement === 'standalone' ? 1.8 : 1.1;
+                    const finalWidth = Math.min(Math.round(rawWidth * scale), 800);
+                    widthStyle = `style="width: ${finalWidth}px"`;
+                }
+
+                return `<div class="diagram-frame"><img src="${pData.data.base64}" ${widthStyle}></div>`;
+            });
+
+            // Formulas
+            result = result.replace(/\{\{formula_(\d+)\}\}/g, (match, id) => {
+                const data = placeholders[`formula_${id}`];
+                if (!data || !data.latex) return `<span style="color:red">[FORMULA MISSING]</span>`;
+                let latex = data.latex;
+                if (latex.startsWith('$') && latex.endsWith('$')) latex = latex.slice(1, -1);
+                return katex.renderToString(latex, { throwOnError: false, displayMode: false });
+            });
+
+            return result;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            init();
+        });
+    </script>
+</body>
+</html>

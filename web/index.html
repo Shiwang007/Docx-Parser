@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medjeex Exam Studio | Tabbed Command Console</title>
+    <link rel="stylesheet" href="web/studio.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-theme="docx">
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>MEDJEEX STUDIO</span>
+        </div>
+        <div id="system-status" style="font-size: 0.75rem; font-weight: 800; color: var(--primary)">READY</div>
+    </header>
+
+    <main>
+        <!-- Sidebar: Command Center -->
+        <aside class="sidebar">
+            <nav class="tab-navbar">
+                <button id="tab-docx" class="tab-btn active">
+                    <i class="fa-solid fa-file-word"></i> Exam Studio
+                </button>
+                <button id="tab-pdf" class="tab-btn">
+                    <i class="fa-solid fa-file-pdf"></i> PDF Toolbox
+                </button>
+            </nav>
+
+            <!-- Exam Tab Pane -->
+            <div id="pane-docx" class="tab-pane">
+                <div class="glass-card">
+                    <div class="upload-zone" id="q-dropzone">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Drop Question Docx</span>
+                        <input type="file" id="q-input" accept=".docx" style="display: none">
+                        <div id="q-status" style="font-size: 0.7rem; color: var(--primary); margin-top: 0.5rem; display: none"></div>
+                    </div>
+
+                    <div class="upload-zone" id="a-dropzone" style="padding: 1rem; border-style: dotted">
+                        <i class="fa-solid fa-key" style="font-size: 1.2rem"></i>
+                        <span style="font-size: 0.75rem">Optional Answer Key</span>
+                        <input type="file" id="a-input" accept=".docx" style="display: none">
+                        <div id="a-status" style="font-size: 0.7rem; color: var(--primary); margin-top: 0.3rem; display: none"></div>
+                    </div>
+
+                    <div style="margin-top: 1rem">
+                        <label style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase">Exam Identifier</label>
+                        <input type="text" id="exam-title" placeholder="e.g. Minor Test 05">
+                    </div>
+
+                    <div style="margin-top: 1rem">
+                        <label style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase">Paper Format</label>
+                        <select id="paper-format">
+                            <option value="normal" style="background: #111; color: #fff" selected>Normal (Standard)</option>
+                            <option value="advance_1" style="background: #111; color: #fff">Advance 1 (Paper 1)</option>
+                            <option value="advance_2" style="background: #111; color: #fff">Advance 2 (Paper 2)</option>
+                        </select>
+                    </div>
+
+                    <button id="exec-docx" class="btn-execute" disabled>
+                        <i class="fa-solid fa-bolt"></i> START EXAM PIPELINE
+                    </button>
+                </div>
+            </div>
+
+            <!-- PDF Tab Pane -->
+            <div id="pane-pdf" class="tab-pane hidden">
+                <div class="glass-card">
+                    <div class="upload-zone" id="pdf-dropzone">
+                        <i class="fa-solid fa-file-export"></i>
+                        <span>Drop PDF to Process</span>
+                        <input type="file" id="pdf-input" accept=".pdf" style="display: none">
+                        <div id="pdf-status" style="font-size: 0.7rem; color: var(--secondary); margin-top: 0.5rem; display: none"></div>
+                    </div>
+
+                    <div style="margin-top: 1rem">
+                        <label style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase">Tool Action</label>
+                        <select id="pdf-mode">
+                            <option value="split" selected>Split into Chunks (ZIP)</option>
+                            <option value="compress">Aggressive Compression</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-top: 1rem">
+                        <label id="pdf-val-label" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase">Chunk Size (Pages)</label>
+                        <input type="number" id="pdf-value" value="50">
+                    </div>
+
+                    <button id="exec-pdf" class="btn-execute" disabled>
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> RUN PDF TOOL
+                    </button>
+                </div>
+            </div>
+
+            <!-- Global Archive -->
+            <div id="recent-archive">
+                <div style="font-size: 0.7rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em">
+                    Recent Studio Exports
+                </div>
+                <div id="archive-list">
+                    <!-- Dynamic Entries -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Console: Permanent Live Preview -->
+        <section class="viewer-console">
+            <div class="viewer-header">
+                <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase">Live Console Preview</div>
+                <div id="viewer-controls"></div>
+            </div>
+            
+            <iframe id="viewer-frame" src="about:blank"></iframe>
+
+            <div id="status-overlay" style="position: absolute; bottom: 1.5rem; left: 1.5rem; right: 1.5rem; pointer-events: none">
+                <div id="toast" class="hidden" style="background: rgba(0,0,0,0.9); border: 1px solid var(--accent); padding: 1rem; border-radius: 0.75rem; box-shadow: 0 10px 40px rgba(0,0,0,0.6); pointer-events: all; animation: fadeIn 0.4s ease">
+                    <!-- Status feedback -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="web/studio.js"></script>
+</body>
+</html>

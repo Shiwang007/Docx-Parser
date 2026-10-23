@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legacy Bridge | Medjeex Emergency Utility</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary: #f59e0b; /* Amber for 'Legacy/Alert' feel */
+            --accent: #10b981;
+            --text: #f1f5f9;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(circle at top right, rgba(245, 158, 11, 0.05), transparent),
+                              radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.05), transparent);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .app-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
+        .icon-circle {
+            width: 80px; height: 80px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 2rem; color: var(--primary);
+        }
+
+        h1 { font-family: 'Outfit', sans-serif; margin-bottom: 1rem; font-size: 2rem; }
+        p { color: #94a3b8; margin-bottom: 2.5rem; font-size: 0.95rem; line-height: 1.6; }
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .drop-zone:hover, .drop-zone.active {
+            border-color: var(--primary);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .file-input { display: none; }
+
+        .btn-convert {
+            width: 100%;
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            display: none;
+            margin-top: 2rem;
+            transition: transform 0.2s;
+        }
+
+        .btn-convert:hover { transform: scale(1.02); }
+
+        .status-badge {
+            display: none;
+            margin-top: 1.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            animation: fadeIn 0.4s;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .loader {
+            display: none;
+            margin: 2rem auto;
+            width: 30px; height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .footer-note {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="app-card">
+            <div class="icon-circle">
+                <i class="fa-solid fa-bridge-lock"></i>
+            </div>
+            <h1>Legacy Bridge</h1>
+            <p>Standalone emergency utility for converting Word files into the legacy DPP format with pre-rendered math images.</p>
+
+            <div class="drop-zone" id="drop-zone">
+                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--border); margin-bottom: 1rem;"></i>
+                <div style="font-weight: 600; margin-bottom: 0.5rem">Drop converted Word file</div>
+                <div style="font-size: 0.8rem; color: var(--border)">Click to browse your machine</div>
+                <input type="file" id="file-input" class="file-input" accept=".docx">
+            </div>
+
+            <div id="status-container"></div>
+            <div class="loader" id="loader"></div>
+            
+            <button class="btn-convert" id="convert-btn">
+                START EMERGENCY CONVERSION
+            </button>
+        </div>
+
+        <div class="footer-note">
+            Priority-1 Emergency Utility • Zero Renderer Changes Required
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const convertBtn = document.getElementById('convert-btn');
+        const loader = document.getElementById('loader');
+        const statusContainer = document.getElementById('status-container');
+        
+        let selectedFile = null;
+
+        dropZone.onclick = () => fileInput.click();
+        
+        fileInput.onchange = (e) => {
+            if(e.target.files.length > 0) handleFile(e.target.files[0]);
+        };
+
+        dropZone.ondragover = (e) => {
+            e.preventDefault();
+            dropZone.classList.add('active');
+        };
+
+        dropZone.ondragleave = () => dropZone.classList.remove('active');
+
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            if(e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+        };
+
+        function handleFile(file) {
+            selectedFile = file;
+            dropZone.innerHTML = `
+                <i class="fa-solid fa-file-word" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                <div style="font-weight: 600; margin-bottom: 0.5rem">${file.name}</div>
+                <div style="font-size: 0.8rem; color: var(--primary)">File Staged Successfully</div>
+            `;
+            convertBtn.style.display = 'block';
+            statusContainer.innerHTML = '';
+        }
+
+        convertBtn.onclick = async () => {
+            if(!selectedFile) return;
+
+            convertBtn.style.display = 'none';
+            loader.style.display = 'block';
+            
+            try {
+                const formData = new FormData();
+                formData.append('docx_file', selectedFile);
+
+                const resp = await fetch('/api/legacy/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await resp.json();
+                
+                if(data.success) {
+                    loader.style.display = 'none';
+                    statusContainer.innerHTML = `<div class="status-badge" style="display: block">${data.subject} Detected • ${data.count} Questions</div>`;
+                    
+                    // Trigger Download
+                    const blob = new Blob([JSON.stringify(data.questions, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `LEGACY_${selectedFile.name.replace('.docx', '')}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    throw new Error(data.error || "Transformation failed");
+                }
+
+            } catch (err) {
+                alert(err.message);
+                loader.style.display = 'none';
+                convertBtn.style.display = 'block';
+            }
+        };
+    </script>
+</body>
+</html>
